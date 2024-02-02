@@ -14,11 +14,13 @@ The project is organized as follows:
 - `Student_Performance.csv`: Dataset used in the analysis.
 - `LICENSE`: The project is licensed under the MIT License.
 
-## Usage
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-To get started with this project, follow these steps:
+## Acknowledgments
+The dataset used in this analysis is sourced from Kaggle.
+Contact
+For any questions or inquiries, feel free to contact the project owner:
 
-1. Clone the repository to your local machine:
-
-   ```bash
-   git clone https://github.com/Tshepang-Mahlatji/Student-Performance-Analysis-r.git
+Tshepang Mahlatji
+Email: tshepangmahlatji2001@gmail.com
