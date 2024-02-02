@@ -17,10 +17,3 @@ The project is organized as follows:
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
-The dataset used in this analysis is sourced from Kaggle.
-Contact
-For any questions or inquiries, feel free to contact the project owner:
-
-Tshepang Mahlatji
-Email: tshepangmahlatji2001@gmail.com
