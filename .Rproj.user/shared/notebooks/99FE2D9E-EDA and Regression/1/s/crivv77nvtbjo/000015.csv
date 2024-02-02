@@ -1,0 +1,6 @@
+"0","ggplot(data, aes(x = Extracurricular.Activities, y = Performance.Index, fill = Extracurricular.Activities)) +"
+"0","  geom_boxplot() +"
+"0","  labs(title = ""Extracurricular Activities by Student"", y = ""Perfomance Index"") +"
+"0","  scale_fill_manual(values = c(""blue"", ""red"")) + ### Adding color to the plot"
+"0","  theme_minimal()"
+"0",""

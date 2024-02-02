@@ -1,0 +1,162 @@
+---
+title: "Student performance analysis"
+author: "Tshepang  Mahlatji"
+date: "2024-02-01"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+
+
+# Introduction
+
+This R Project focuses on the analysis of student performance, exploring the influence of various factors on academic outcomes. The project encompasses data loading, exploration, linear regression modeling, and diagnostic checks to gain insights into the determinants of students' academic success.
+
+## Variables of Interest
+
+The dataset used in this analysis includes the following variables:
+
+1. **Hours Studied:** The number of hours students spend on studying.
+2. **Previous Scores:** Students' performance in previous assessments.
+3. **Extracurricular Activities:** Involvement in activities beyond the regular curriculum.
+4. **Sleep Hours:** The amount of sleep students get regularly.
+5. **Sample Question Papers Practiced:** The number of practice question papers students have worked on.
+6. **Performance Index:** The overall performance index representing academic achievements.
+
+Throughout the project, we will explore relationships between these variables and the students' performance index. The analysis includes building linear regression models to understand the impact of different factors and conducting diagnostic checks to ensure the validity of the models.
+
+The subsequent sections will provide a detailed walkthrough of the data loading process, exploration of variables, linear regression modeling, and the diagnostic checks performed to draw meaningful conclusions about the factors influencing student performance.
+
+```{r Loading Packages, include=FALSE}
+library(ggplot2)
+library(car)
+library(tidyverse)
+library(dplyr)
+
+data = read.csv("Student_Performance.csv")
+```
+
+
+```{r Data Statistics, echo=TRUE}
+head(data)
+colnames(data)
+summary(data)
+```
+
+```{r Plotting Categorical Variable}
+ggplot(data, aes(x = Extracurricular.Activities, y = Performance.Index, fill = Extracurricular.Activities)) +
+  geom_boxplot() +
+  labs(title = "Extracurricular Activities by Student", y = "Perfomance Index") +
+  scale_fill_manual(values = c("blue", "red")) + ### Adding color to the plot
+  theme_minimal()
+
+```
+
+
+```{r Correlation Of Explanatory variables}
+data$Extracurricular.Activities = ifelse(data$Extracurricular.Activities == 'Yes', 1, 0)
+Y = data$Performance.Index
+X = subset(data,select = -Performance.Index)
+
+
+correlation_matrix = cor(X)
+correlation_long = correlation_matrix %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "variable1") %>%
+  gather(variable2, correlation, -variable1)
+ggplot(correlation_long, aes(x = variable1, y = variable2, fill = correlation, label = sprintf("%.5f", correlation))) +
+  geom_tile(color = "white") +
+  geom_text(size = 3, color = "black", show.legend = FALSE) +  # Add text labels
+  scale_fill_gradientn(colors = c("#4575b4", "#91bfdb", "#fee08b", "#d73027"),
+                       limits = c(-1, 1),
+                       guide = "colorbar") +
+  theme_minimal() +
+  labs(title = "Correlation Matrix", x = "Variables", y = "Variables") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+Multicollinearity is a concern in regression analysis when independent variables are highly correlated, potentially leading to unstable coefficient estimates. This analysis focuses on visualizing the correlation matrix of explanatory variables to identify any signs of multicollinearity.From the plot the relationship between independent variable is between -0.02 and 0.03, which indicates a weak relationship between the variables.
+
+```{r Linear Regression}
+set.seed(42) 
+index <- sample(1:nrow(data), 0.8 * nrow(data))
+X_train <- X[index, ]
+X_test <- X[-index, ]
+Y_train <- Y[index]
+Y_test <- Y[-index]
+
+model <- lm(Y_train ~ ., data = X_train)
+
+coefficients <- coef(model)[-1]  # Exclude the intercept
+coefficients
+variable_names <- names(coefficients) # Get variable names
+
+```
+
+```{r Displaying Coefficients}
+# Display coefficients with variable names
+print(paste("Intercept:", coef(model)[1]))
+cat("Coefficients:\n")
+for (i in seq_along(coefficients)) {
+  cat(variable_names[i], ":", coefficients[i], "\n")
+}
+print(paste("Intercept:", coef(model)[1]))
+
+Y_pred <- predict(model, newdata = X_test)
+r_squared <- summary(model)$r.squared
+cat("R-squared:", round(r_squared, 5), "\n")
+```
+\( R^2 \) is 0.98876, which implies that the 98.87% of performance index  in final grade is explained by 5 independent variables
+```{r}
+summary(model)
+```
+The p-values associated with the explanatory variables in our regression analysis play a crucial role in assessing their statistical significance. A p-value less than 0.05 is commonly used as a threshold for significance. In our analysis, all p-values for the explanatory variables are less than 0.05, indicating that they are statistically significant in explaining the performance index.
+
+
+
+```{r Model Diagnostic:Normally distributed Residuals}
+mean_residuals = mean(model$residuals, na.rm=FALSE)
+sd_residuals = sd(model$residuals)
+
+ggplot(model, aes(x = model$residuals)) +
+  geom_histogram(binwidth = 0.5, fill = "lightblue", color = "black", alpha = 0.9) +
+  stat_function(fun = dnorm, args = list(mean = mean_residuals, sd = sd_residuals),
+                color = "red", linewidth = 1.5)+
+  labs(title = "Histogram of Residuals Overlayed in Normal Distribution", x = "Residuals") +
+  theme_minimal()+
+  xlim(range(model$residuals))
+```
+```{r}
+Residuals = data.frame(model$residuals) 
+mu = mean(Residuals$model.residuals)
+sigma = sd(Residuals$model.residuals)
+```
+
+
+
+
+
+```{r QQ plot for residuals}
+qqPlot(Residuals$model.residuals)
+
+```
+
+The alignment of the QQ plot of residuals with the 45-degree line provides evidence supporting the assumption of normality. This strengthens the validity of our linear regression analysis, suggesting that the model is an appropriate representation of the relationship between the variables
+
+```{r Kolmogorov-Smirnov test for normality}
+result = ks.test(Residuals$model.residuals, "pnorm", mean = mu, sd = sigma)
+
+cat("Kolmogorov-Smirnov Test Statistic:", result$statistic, "\n")
+cat("P-value:", result$p.value, "\n")
+
+alpha <- 0.05
+if (result$p.value < alpha) {
+  cat("Reject the null hypothesis: The residuals are not normally distributed.\n")
+} else {
+  cat("Fail to reject the null hypothesis: The residuals appear to be normally distributed.\n")
+}
+```
+The Kolmogorov-Smirnov test is commonly used to assess the normality of residuals. The null hypothesis of this test is that the data follows a normal distribution. In our analysis, the p-value from the Kolmogorov-Smirnov test is 0.746113. With a p-value greater than 0.05, we fail to reject the null hypothesis, suggesting that our residuals likely follow a normal distribution.
